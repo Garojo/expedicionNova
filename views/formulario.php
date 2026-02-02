@@ -1,6 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <!-- En el formulario, añadir campo oculto para la página -->
+<form method="POST" action="index.php?action=guardar">
+    
+    <!-- Campos ocultos para control -->
+    <input type="hidden" name="editando" value="<?= isset($entidad) ? 'true' : 'false' ?>">
+    
+    <?php if (isset($entidad)): ?>
+        <input type="hidden" name="id_original" value="<?= $entidad->getId() ?>">
+        <?php 
+            // Obtener tipo actual para el select
+            $tipoActual = get_class($entidad);
+            $tipoSeleccionado = $tipoActual; // Ya están en el mismo formato
+        ?>
+    <?php endif; ?>
+    
+    <!-- Campo oculto para guardar la página actual -->
+    <input type="hidden" name="pagina_actual" 
+           value="<?= $_SESSION['pagina_edicion'] ?? ($_GET['pagina'] ?? 1) ?>">
+    
+    <!-- Resto del formulario... -->
     <title><?= isset($entidad) ? 'Editar' : 'Crear' ?> Entidad Estelar</title>
     <style>
         body { 
@@ -144,12 +164,64 @@
                        required>
             </div>
             
-            <div class="campo">
-                <label for="peligrosidad">⚠️ Peligrosidad (1-10):</label>
-                <input type="number" min="1" max="10" step="0.1" name="peligrosidad" id="peligrosidad" 
-                       value="<?= isset($entidad) ? $entidad->getPeligrosidad() : '5' ?>" 
-                       required>
-            </div>
+<div class="campo">
+    <label for="peligrosidad">⚠️ Nivel de Peligrosidad:</label>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <input type="range" min="1" max="10" step="0.1" name="peligrosidad" id="peligrosidad" 
+               value="<?= isset($entidad) ? $entidad->getPeligrosidad() : '5' ?>" 
+               oninput="actualizarPeligrosidad(this.value)"
+               required
+               style="flex-grow: 1;">
+        
+        <div id="indicador-peligrosidad" 
+             style="width: 120px; padding: 8px 15px; border-radius: 20px; text-align: center; font-weight: bold; color: white;"
+             data-value="<?= isset($entidad) ? $entidad->getPeligrosidad() : '5' ?>">
+            <span id="valor-peligrosidad"><?= isset($entidad) ? $entidad->getPeligrosidad() : '5' ?></span>/10
+        </div>
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 12px;">
+        <span>1 = Inofensivo</span>
+        <span>10 = Extremadamente peligroso</span>
+    </div>
+    
+    <div id="descripcion-peligrosidad" style="margin-top: 8px; font-size: 13px; font-style: italic;">
+        <!-- Se llena con JavaScript -->
+    </div>
+</div>
+
+<script>
+// Actualizar indicador de peligrosidad en tiempo real
+function actualizarPeligrosidad(valor) {
+    // Actualizar valor numérico
+    document.getElementById('valor-peligrosidad').textContent = valor;
+    
+    // Actualizar color del indicador
+    var indicador = document.getElementById('indicador-peligrosidad');
+    if (valor < 3) {
+        indicador.style.background = 'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)';
+        indicador.style.boxShadow = '0 2px 8px rgba(244, 67, 54, 0.3)';
+        document.getElementById('descripcion-peligrosidad').innerHTML = 
+            '<span style="color: #f44336">⚠️ ALTA PELIGROSIDAD</span> - Aparecerá en rojo en el listado';
+    } else if (valor < 6) {
+        indicador.style.background = 'linear-gradient(135deg, #ffc107 0%, #ffa000 100%)';
+        indicador.style.boxShadow = '0 2px 8px rgba(255, 193, 7, 0.3)';
+        document.getElementById('descripcion-peligrosidad').innerHTML = 
+            '<span style="color: #ffa000">⚠️ Peligrosidad moderada</span> - Aparecerá en naranja';
+    } else {
+        indicador.style.background = 'linear-gradient(135deg, #4CAF50 0%, #388e3c 100%)';
+        indicador.style.boxShadow = '0 2px 8px rgba(76, 175, 80, 0.3)';
+        document.getElementById('descripcion-peligrosidad').innerHTML = 
+            '<span style="color: #388e3c">✓ Baja peligrosidad</span> - Aparecerá en verde';
+    }
+}
+
+// Inicializar al cargar la página
+window.onload = function() {
+    var valorInicial = document.getElementById('peligrosidad').value;
+    actualizarPeligrosidad(valorInicial);
+};
+</script>
             
             <!-- Campos ESPECÍFICOS (se muestran dinámicamente) -->
             <div id="camposEspecificos">
@@ -270,5 +342,7 @@
             }
         };
     </script>
+
+    
 </body>
 </html>

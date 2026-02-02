@@ -7,7 +7,6 @@ ini_set('display_errors', 1);
 require_once __DIR__ . '/autoloader.php';
 
 // ======== 2. CARGAR MANUALMENTE LAS CLASES CRÍTICAS ========
-// Esto asegura que estén disponibles para la deserialización
 $clasesCriticas = [
     'EntidadEstelar',
     'FormaDeVida',
@@ -20,9 +19,7 @@ $clasesCriticas = [
 ];
 
 foreach ($clasesCriticas as $clase) {
-    // Forzar la carga de cada clase
     if (!class_exists($clase) && !interface_exists($clase)) {
-        // El autoloader se encargará
         class_exists($clase);
     }
 }
@@ -37,6 +34,11 @@ if (!isset($_SESSION['entidades'])) {
     $_SESSION['entidades'] = [];
 }
 
+// Inicializar variable de última página si no existe
+if (!isset($_SESSION['ultima_pagina'])) {
+    $_SESSION['ultima_pagina'] = 1;
+}
+
 // ======== 5. CREAR CONTROLADOR ========
 try {
     $controller = new EntidadController();
@@ -47,6 +49,11 @@ try {
 // ======== 6. MANEJAR ACCIONES ========
 $action = $_GET['action'] ?? 'index';
 $id = $_GET['id'] ?? null;
+
+// Si viene una página por GET, actualizar en sesión
+if (isset($_GET['pagina'])) {
+    $_SESSION['ultima_pagina'] = $_GET['pagina'];
+}
 
 switch ($action) {
     case 'index':
@@ -62,14 +69,16 @@ switch ($action) {
         if ($id) {
             $controller->editar($id);
         } else {
-            header('Location: index.php');
+            $pagina = $_SESSION['ultima_pagina'] ?? 1;
+            header('Location: index.php?action=index&pagina=' . $pagina);
         }
         break;
     case 'eliminar':
         if ($id) {
             $controller->eliminar($id);
         } else {
-            header('Location: index.php');
+            $pagina = $_SESSION['ultima_pagina'] ?? 1;
+            header('Location: index.php?action=index&pagina=' . $pagina);
         }
         break;
     default:
