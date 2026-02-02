@@ -1,6 +1,6 @@
 <?php
 
-public interface iGestor
+interface iGestor
 {
     public function obtenerTodos(): array;
     public function guardar(EntidadEstelar $entidad): void;
