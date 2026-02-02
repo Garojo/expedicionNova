@@ -1,38 +1,50 @@
 <?php
-// ======== CARGAR AUTOLOADER PRIMERO ========
+// Activar errores
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// ======== 1. CARGAR AUTOLOADER PRIMERO ========
 require_once __DIR__ . '/autoloader.php';
 
-// ======== CARGAR MANUALMENTE LAS CLASES CRÍTICAS ========
+// ======== 2. CARGAR MANUALMENTE LAS CLASES CRÍTICAS ========
 // Esto asegura que estén disponibles para la deserialización
 $clasesCriticas = [
-    'FormaDeVida',
-    'Minerales', 
-    'Climatologia',
     'EntidadEstelar',
-    'iInteractuable',
+    'FormaDeVida',
+    'Minerales',
+    'Climatologia',
+    'IInteractuable',
     'IGestor',
-    'GestorEntidades'
+    'GestorEntidades',
+    'EntidadController'
 ];
 
 foreach ($clasesCriticas as $clase) {
+    // Forzar la carga de cada clase
     if (!class_exists($clase) && !interface_exists($clase)) {
-        // Forzar la carga
+        // El autoloader se encargará
         class_exists($clase);
     }
 }
 
-// ======== AHORA SÍ INICIAR SESIÓN ========
-session_start();
+// ======== 3. AHORA SÍ INICIAR SESIÓN ========
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// ======== INICIALIZAR SESIÓN SI NO EXISTE ========
+// ======== 4. INICIALIZAR SESIÓN SI NO EXISTE ========
 if (!isset($_SESSION['entidades'])) {
     $_SESSION['entidades'] = [];
 }
 
-// ======== CREAR CONTROLADOR ========
-$controller = new EntidadController();
+// ======== 5. CREAR CONTROLADOR ========
+try {
+    $controller = new EntidadController();
+} catch (Error $e) {
+    die("❌ Error creando controlador: " . $e->getMessage());
+}
 
-// ======== MANEJAR ACCIONES ========
+// ======== 6. MANEJAR ACCIONES ========
 $action = $_GET['action'] ?? 'index';
 $id = $_GET['id'] ?? null;
 
@@ -47,12 +59,20 @@ switch ($action) {
         $controller->guardar();
         break;
     case 'editar':
-        $controller->editar($id);
+        if ($id) {
+            $controller->editar($id);
+        } else {
+            header('Location: index.php');
+        }
         break;
     case 'eliminar':
-        $controller->eliminar($id);
+        if ($id) {
+            $controller->eliminar($id);
+        } else {
+            header('Location: index.php');
+        }
         break;
     default:
         $controller->index();
-        break;
 }
+?>

@@ -3,173 +3,272 @@
 <head>
     <title><?= isset($entidad) ? 'Editar' : 'Crear' ?> Entidad Estelar</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .campo { margin-bottom: 15px; }
-        label { display: inline-block; width: 200px; }
-        input, select { width: 300px; padding: 5px; }
-        .especifico { background-color: #f0f0f0; padding: 15px; margin: 15px 0; border-radius: 5px; }
-        button { padding: 10px 20px; background: #4CAF50; color: white; border: none; cursor: pointer; font-size: 16px; }
-        button:hover { background: #45a049; }
-        .error { color: red; }
-        .tipo-seccion { margin-bottom: 20px; }
-    </style>
-    <script>
-        function mostrarCamposEspecificos() {
-            var tipo = document.getElementById('tipo').value;
-            
-            // Ocultar todos los campos específicos primero
-            document.getElementById('camposFormaVida').style.display = 'none';
-            document.getElementById('camposMineral').style.display = 'none';
-            document.getElementById('camposClima').style.display = 'none';
-            
-            // Mostrar solo los campos correspondientes
-            if (tipo === 'FormaDeVida') {
-                document.getElementById('camposFormaVida').style.display = 'block';
-            } else if (tipo === 'Minerales') {
-                document.getElementById('camposMineral').style.display = 'block';
-            } else if (tipo === 'Climatologia') {
-                document.getElementById('camposClima').style.display = 'block';
-            }
-            
-            // Mostrar el botón de guardar solo si hay tipo seleccionado
-            var btnGuardar = document.getElementById('btnGuardar');
-            btnGuardar.style.display = tipo ? 'inline-block' : 'none';
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px;
+            background-color: #f5f5f5;
         }
-        
-        // Ejecutar al cargar la página
-        window.onload = mostrarCamposEspecificos;
-    </script>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .campo { 
+            margin-bottom: 20px; 
+        }
+        label { 
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        input, select { 
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .botones {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+        }
+        button { 
+            padding: 12px 24px; 
+            background: #4CAF50; 
+            color: white; 
+            border: none; 
+            border-radius: 4px;
+            cursor: pointer; 
+            font-size: 16px;
+            font-weight: bold;
+            flex: 1;
+        }
+        .btn-cancelar {
+            background: #f44336;
+            text-decoration: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-align: center;
+            flex: 1;
+        }
+        .campo-especifico {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .aviso {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
 </head>
 <body>
-    <h1><?= isset($entidad) ? 'Editar' : 'Crear' ?> Entidad Estelar</h1>
-    
-    <a href="index.php?action=index">← Volver al listado</a>
-    <hr>
-    
-    <form method="POST" action="index.php?action=guardar">
-        <!-- Si estamos editando, necesitamos el ID -->
-        <?php if (isset($entidad)): ?>
-            <input type="hidden" name="id" value="<?= $entidad->getId() ?>">
+    <div class="container">
+        <h1><?= isset($entidad) ? '✏️ Editar' : '🚀 Crear' ?> Entidad Estelar</h1>
+        
+        <?php if (!isset($entidad)): ?>
+            <div class="aviso">
+                <strong>📝 Primero selecciona un tipo de entidad:</strong> 
+                Elige el tipo en el menú desplegable para ver los campos específicos.
+            </div>
         <?php endif; ?>
         
-        <!-- Tipo de Entidad -->
-        <div class="campo">
-            <label for="tipo"><strong>Tipo de Entidad:</strong></label>
-            <select name="tipo" id="tipo" required onchange="mostrarCamposEspecificos()">
-                <option value="">-- Selecciona un tipo --</option>
-                <option value="FormaDeVida" 
-                    <?= (isset($entidad) && get_class($entidad) === 'FormaDeVida') ? 'selected' : '' ?>>
-                    Forma de Vida
-                </option>
-                <option value="Minerales"
-                    <?= (isset($entidad) && get_class($entidad) === 'Minerales') ? 'selected' : '' ?>>
-                    Mineral
-                </option>
-                <option value="Climatologia"
-                    <?= (isset($entidad) && get_class($entidad) === 'Climatologia') ? 'selected' : '' ?>>
-                    Climatología
-                </option>
-            </select>
-            <small>Selecciona primero el tipo para ver los campos específicos</small>
-        </div>
-        
-        <h3>Datos Generales (obligatorios para todos)</h3>
-        
-        <div class="campo">
-            <label for="nombre">Nombre:</label>
-            <input type="text" name="nombre" id="nombre" 
-                   value="<?= isset($entidad) ? htmlspecialchars($entidad->getNombre()) : '' ?>" 
-                   required placeholder="Ej: Xenomorfo, Cristal de Kyber, Tormenta de Metano">
-        </div>
-        
-        <div class="campo">
-            <label for="id">ID (único):</label>
-            <input type="number" step="0.1" name="id" id="id" 
-                   value="<?= isset($entidad) ? $entidad->getId() : '' ?>" 
-                   <?= isset($entidad) ? 'readonly' : 'required' ?>
-                   placeholder="Ej: 1.0, 2.5">
-        </div>
-        
-        <div class="campo">
-            <label for="planeta">Planeta de Origen:</label>
-            <input type="text" name="planeta" id="planeta" 
-                   value="<?= isset($entidad) ? htmlspecialchars($entidad->getPlaneta()) : '' ?>" 
-                   required placeholder="Ej: Marte, Kepler-438b, Tatooine">
-        </div>
-        
-        <div class="campo">
-            <label for="peligrosidad">Nivel de Peligrosidad (1-10):</label>
-            <input type="range" min="1" max="10" step="0.1" name="peligrosidad" id="peligrosidad" 
-                   value="<?= isset($entidad) ? $entidad->getPeligrosidad() : '5' ?>" 
-                   oninput="document.getElementById('valorPeligrosidad').innerHTML = this.value" required>
-            <span id="valorPeligrosidad"><?= isset($entidad) ? $entidad->getPeligrosidad() : '5' ?></span>
-            <small>1 = Inofensivo, 10 = Extremadamente peligroso</small>
-        </div>
-        
-        <!-- Campos ESPECÍFICOS (se muestran según tipo seleccionado) -->
-        
-        <!-- Forma de Vida -->
-        <div id="camposFormaVida" class="especifico" style="display: none;">
-            <h3>📋 Datos específicos de Forma de Vida</h3>
+        <form method="POST" action="index.php?action=guardar">
+            <!-- Campos ocultos para control -->
+            <input type="hidden" name="editando" value="<?= isset($entidad) ? 'true' : 'false' ?>">
+            
+            <?php if (isset($entidad)): ?>
+                <input type="hidden" name="id_original" value="<?= $entidad->getId() ?>">
+                <?php $tipoActual = get_class($entidad); ?>
+            <?php endif; ?>
+            
+            <!-- Tipo de Entidad -->
             <div class="campo">
-                <label for="dieta">Tipo de Dieta:</label>
-                <input type="text" name="dieta" id="dieta" 
-                       value="<?= isset($entidad) && get_class($entidad) === 'FormaDeVida' ? htmlspecialchars($entidad->getDieta()) : '' ?>"
-                       placeholder="Ej: Carnívoro, Herbívoro, Energético">
+                <label for="tipo">📋 Tipo de Entidad:</label>
+                <select name="tipo" id="tipoSelect" required 
+                        onchange="mostrarCamposEspecificos(this.value)">
+                    <option value="">-- Selecciona un tipo --</option>
+                    <option value="FormaDeVida" <?= (isset($entidad) && $tipoActual === 'FormaDeVida') ? 'selected' : '' ?>>
+                        👽 Forma de Vida
+                    </option>
+                    <option value="Minerales" <?= (isset($entidad) && $tipoActual === 'Minerales') ? 'selected' : '' ?>>
+                        💎 Mineral
+                    </option>
+                    <option value="Climatologia" <?= (isset($entidad) && $tipoActual === 'Climatologia') ? 'selected' : '' ?>>
+                        🌪️ Climatología
+                    </option>
+                </select>
+                
+                <?php if (isset($entidad)): ?>
+                    <input type="hidden" name="tipo" value="<?= $tipoActual ?>">
+                <?php endif; ?>
             </div>
+            
+            <!-- Campos COMUNES -->
             <div class="campo">
-                <label for="estructura_osea">Estructura Ósea:</label>
-                <input type="text" name="estructura_osea" id="estructura_osea" 
-                       value="<?= isset($entidad) && get_class($entidad) === 'FormaDeVida' ? htmlspecialchars($entidad->getEstructuraOsea()) : '' ?>"
-                       placeholder="Ej: Endoesqueleto, Exoesqueleto, Flexible">
+                <label for="nombre">🔤 Nombre:</label>
+                <input type="text" name="nombre" id="nombre" 
+                       value="<?= isset($entidad) ? htmlspecialchars($entidad->getNombre()) : '' ?>" 
+                       required>
             </div>
-        </div>
+            
+            <div class="campo">
+                <label for="id">🆔 ID (único):</label>
+                <input type="number" step="0.1" name="id" id="id" 
+                       value="<?= isset($entidad) ? $entidad->getId() : '' ?>" 
+                       <?= isset($entidad) ? 'readonly' : 'required' ?>>
+            </div>
+            
+            <div class="campo">
+                <label for="planeta">🪐 Planeta de Origen:</label>
+                <input type="text" name="planeta" id="planeta" 
+                       value="<?= isset($entidad) ? htmlspecialchars($entidad->getPlaneta()) : '' ?>" 
+                       required>
+            </div>
+            
+            <div class="campo">
+                <label for="peligrosidad">⚠️ Peligrosidad (1-10):</label>
+                <input type="number" min="1" max="10" step="0.1" name="peligrosidad" id="peligrosidad" 
+                       value="<?= isset($entidad) ? $entidad->getPeligrosidad() : '5' ?>" 
+                       required>
+            </div>
+            
+            <!-- Campos ESPECÍFICOS (se muestran dinámicamente) -->
+            <div id="camposEspecificos">
+                <?php if (isset($entidad)): ?>
+                    <?php if ($tipoActual === 'FormaDeVida'): ?>
+                        <div class="campo-especifico">
+                            <h3>👽 Datos de Forma de Vida</h3>
+                            <div class="campo">
+                                <label for="dieta">🍽️ Dieta:</label>
+                                <input type="text" name="dieta" id="dieta" 
+                                       value="<?= htmlspecialchars($entidad->getDieta()) ?>" required>
+                            </div>
+                            <div class="campo">
+                                <label for="estructura_osea">🦴 Estructura Ósea:</label>
+                                <input type="text" name="estructura_osea" id="estructura_osea" 
+                                       value="<?= htmlspecialchars($entidad->getEstructuraOsea()) ?>" required>
+                            </div>
+                        </div>
+                    <?php elseif ($tipoActual === 'Minerales'): ?>
+                        <div class="campo-especifico">
+                            <h3>💎 Datos de Mineral</h3>
+                            <div class="campo">
+                                <label for="composicion">🧪 Composición:</label>
+                                <input type="text" name="composicion" id="composicion" 
+                                       value="<?= htmlspecialchars($entidad->getComposicionQuimica()) ?>" required>
+                            </div>
+                            <div class="campo">
+                                <label for="dureza">💪 Dureza (1-10):</label>
+                                <input type="number" min="1" max="10" step="0.1" name="dureza" id="dureza" 
+                                       value="<?= $entidad->getDureza() ?>" required>
+                            </div>
+                        </div>
+                    <?php elseif ($tipoActual === 'Climatologia'): ?>
+                        <div class="campo-especifico">
+                            <h3>🌪️ Datos de Climatología</h3>
+                            <div class="campo">
+                                <label for="temperatura">🌡️ Temperatura (°C):</label>
+                                <input type="number" step="0.1" name="temperatura" id="temperatura" 
+                                       value="<?= $entidad->getTemperaturaMedia() ?>" required>
+                            </div>
+                            <div class="campo">
+                                <label for="presion">🌬️ Presión (hPa):</label>
+                                <input type="number" step="0.1" name="presion" id="presion" 
+                                       value="<?= $entidad->getPresionAtmosferica() ?>" required>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
+            
+            <!-- Botones -->
+            <div class="botones">
+                <button type="submit" id="btnGuardar">
+                    <?= isset($entidad) ? '💾 Guardar Cambios' : '🚀 Crear Entidad' ?>
+                </button>
+                <a href="index.php?action=index" class="btn-cancelar">❌ Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function mostrarCamposEspecificos(tipo) {
+            var divCampos = document.getElementById('camposEspecificos');
+            var html = '';
+            
+            if (tipo === 'FormaDeVida') {
+                html = `
+                    <div class="campo-especifico">
+                        <h3>👽 Datos de Forma de Vida</h3>
+                        <div class="campo">
+                            <label for="dieta">🍽️ Dieta:</label>
+                            <input type="text" name="dieta" id="dieta" required>
+                        </div>
+                        <div class="campo">
+                            <label for="estructura_osea">🦴 Estructura Ósea:</label>
+                            <input type="text" name="estructura_osea" id="estructura_osea" required>
+                        </div>
+                    </div>
+                `;
+            } else if (tipo === 'Minerales') {
+                html = `
+                    <div class="campo-especifico">
+                        <h3>💎 Datos de Mineral</h3>
+                        <div class="campo">
+                            <label for="composicion">🧪 Composición:</label>
+                            <input type="text" name="composicion" id="composicion" required>
+                        </div>
+                        <div class="campo">
+                            <label for="dureza">💪 Dureza (1-10):</label>
+                            <input type="number" min="1" max="10" step="0.1" name="dureza" id="dureza" required>
+                        </div>
+                    </div>
+                `;
+            } else if (tipo === 'Climatologia') {
+                html = `
+                    <div class="campo-especifico">
+                        <h3>🌪️ Datos de Climatología</h3>
+                        <div class="campo">
+                            <label for="temperatura">🌡️ Temperatura (°C):</label>
+                            <input type="number" step="0.1" name="temperatura" id="temperatura" required>
+                        </div>
+                        <div class="campo">
+                            <label for="presion">🌬️ Presión (hPa):</label>
+                            <input type="number" step="0.1" name="presion" id="presion" required>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            divCampos.innerHTML = html;
+        }
         
-        <!-- Mineral -->
-        <div id="camposMineral" class="especifico" style="display: none;">
-            <h3>💎 Datos específicos de Mineral</h3>
-            <div class="campo">
-                <label for="composicion">Composición Química:</label>
-                <input type="text" name="composicion" id="composicion" 
-                       value="<?= isset($entidad) && get_class($entidad) === 'Minerales' ? htmlspecialchars($entidad->getComposicionQuimica()) : '' ?>"
-                       placeholder="Ej: SiO₂, Fe₃O₄, C (diamante)">
-            </div>
-            <div class="campo">
-                <label for="dureza">Dureza (Escala de Mohs):</label>
-                <input type="number" step="0.1" min="1" max="10" name="dureza" id="dureza" 
-                       value="<?= isset($entidad) && get_class($entidad) === 'Minerales' ? $entidad->getDureza() : '1' ?>"
-                       placeholder="1 (talco) a 10 (diamante)">
-            </div>
-        </div>
-        
-        <!-- Climatología -->
-        <div id="camposClima" class="especifico" style="display: none;">
-            <h3>🌪️ Datos específicos de Climatología</h3>
-            <div class="campo">
-                <label for="temperatura">Temperatura Media (°C):</label>
-                <input type="number" step="0.1" name="temperatura" id="temperatura" 
-                       value="<?= isset($entidad) && get_class($entidad) === 'Climatologia' ? $entidad->getTemperaturaMedia() : '0' ?>"
-                       placeholder="Ej: -89.2 (Antártida), 58 (Valle de la Muerte)">
-            </div>
-            <div class="campo">
-                <label for="presion">Presión Atmosférica (hPa):</label>
-                <input type="number" step="0.1" name="presion" id="presion" 
-                       value="<?= isset($entidad) && get_class($entidad) === 'Climatologia' ? $entidad->getPresionAtmosferica() : '1013' ?>"
-                       placeholder="1013 hPa = presión al nivel del mar en Tierra">
-            </div>
-        </div>
-        
-        <!-- Botón de Guardar -->
-        <div class="campo">
-            <button type="submit" id="btnGuardar" style="display: none;">
-                <?= isset($entidad) ? '💾 Actualizar Entidad' : '🚀 Crear Entidad' ?>
-            </button>
-            <a href="index.php?action=index" style="margin-left: 20px;">❌ Cancelar</a>
-        </div>
-        
-        <div class="campo">
-            <small><strong>Nota:</strong> Todos los campos son obligatorios. Primero selecciona el tipo de entidad.</small>
-        </div>
-    </form>
+        // Si hay un tipo seleccionado al cargar (edición), mostrar sus campos
+        window.onload = function() {
+            var selectTipo = document.getElementById('tipoSelect');
+            if (selectTipo.value) {
+                mostrarCamposEspecificos(selectTipo.value);
+            }
+        };
+    </script>
 </body>
 </html>
