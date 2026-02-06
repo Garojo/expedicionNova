@@ -22,7 +22,7 @@ spl_autoload_register(function ($className) {
     }
     
     // 2. Buscar en carpetas estándar
-    $carpetas = ['models/', 'controllers/', 'helpers/', ''];
+    $carpetas = ['models/', 'controllers/', 'views/', ''];
     
     foreach ($carpetas as $carpeta) {
         $ruta = __DIR__ . '/' . $carpeta . $className . '.php';

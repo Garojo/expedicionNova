@@ -7,12 +7,48 @@ class EntidadController {
     }
     
     public function index() {
-        // Guardar página actual en sesión para futuras redirecciones
+        // Guardar página actual en sesión
         $paginaActual = $_GET['pagina'] ?? 1;
         $_SESSION['ultima_pagina'] = $paginaActual;
         
+        // Obtener filtro si existe
+        $filtroTipo = $_GET['filtro'] ?? '';
+        
         // Obtener todas las entidades
-        $entidades = $this->gestor->obtenerTodos();
+        $todasEntidades = $this->gestor->obtenerTodos();
+        
+        // Aplicar filtro si se especificó
+        if (!empty($filtroTipo) && $filtroTipo !== 'todos') {
+            $entidades = array_filter($todasEntidades, function($entidad) use ($filtroTipo) {
+                return is_object($entidad) && get_class($entidad) === $filtroTipo;
+            });
+            // Reindexar array
+            $entidades = array_values($entidades);
+        } else {
+            $entidades = $todasEntidades;
+        }
+        
+        // Guardar filtro actual en sesión
+        if (isset($_GET['filtro'])) {
+            $_SESSION['filtro_actual'] = $_GET['filtro'];
+        }
+        
+        // Calcular contadores por tipo
+        $contadores = [
+            'total' => count($todasEntidades),
+            'FormaDeVida' => 0,
+            'Minerales' => 0,
+            'Climatologia' => 0
+        ];
+        
+        foreach ($todasEntidades as $entidad) {
+            if (is_object($entidad)) {
+                $tipo = get_class($entidad);
+                if (isset($contadores[$tipo])) {
+                    $contadores[$tipo]++;
+                }
+            }
+        }
         
         // Paginación básica
         $pagina = $paginaActual;
@@ -28,7 +64,7 @@ class EntidadController {
         $inicio = ($pagina - 1) * $porPagina;
         $entidadesPagina = array_slice($entidades, $inicio, $porPagina);
         
-        // Cargar vista
+        // Pasar datos a la vista
         require_once 'views/lista.php';
     }
     
@@ -41,7 +77,12 @@ class EntidadController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             // Redirigir manteniendo la página
             $pagina = $_SESSION['ultima_pagina'] ?? 1;
-            header('Location: index.php?action=crear&pagina=' . $pagina);
+            $filtro = $_SESSION['filtro_actual'] ?? '';
+            $url = 'index.php?action=crear&pagina=' . $pagina;
+            if ($filtro && $filtro !== 'todos') {
+                $url .= '&filtro=' . $filtro;
+            }
+            header('Location: ' . $url);
             exit();
         }
         
@@ -154,23 +195,37 @@ class EntidadController {
             $this->gestor->guardar($entidad);
         }
         
-        // Redirigir al listado manteniendo la página
+        // Redirigir al listado manteniendo página y filtro
         $pagina = $_SESSION['ultima_pagina'] ?? 1;
-        header('Location: index.php?action=index&pagina=' . $pagina);
+        $filtro = $_SESSION['filtro_actual'] ?? '';
+        $url = 'index.php?action=index&pagina=' . $pagina;
+        if ($filtro && $filtro !== 'todos') {
+            $url .= '&filtro=' . $filtro;
+        }
+        header('Location: ' . $url);
         exit();
     }
     
     public function editar($id) {
-        // Guardar página actual antes de editar
+        // Guardar página y filtro actual antes de editar
         $paginaActual = $_GET['pagina'] ?? ($_SESSION['ultima_pagina'] ?? 1);
+        $filtroActual = $_GET['filtro'] ?? ($_SESSION['filtro_actual'] ?? '');
+        
         $_SESSION['pagina_edicion'] = $paginaActual;
+        $_SESSION['filtro_edicion'] = $filtroActual;
         
         $entidad = $this->gestor->obtenerPorId($id);
         
         if (!$entidad) {
+            // Redirigir manteniendo página y filtro
+            $url = 'index.php?action=index&pagina=' . $paginaActual;
+            if ($filtroActual && $filtroActual !== 'todos') {
+                $url .= '&filtro=' . $filtroActual;
+            }
+            
             echo "<script>
                 alert('❌ Error: Entidad no encontrada');
-                window.location.href = 'index.php?action=index&pagina=' + $paginaActual;
+                window.location.href = '$url';
             </script>";
             exit();
         }
@@ -179,13 +234,18 @@ class EntidadController {
     }
     
     public function eliminar($id) {
-        // Guardar página actual antes de eliminar
+        // Guardar página y filtro actual antes de eliminar
         $paginaActual = $_GET['pagina'] ?? ($_SESSION['ultima_pagina'] ?? 1);
+        $filtroActual = $_GET['filtro'] ?? ($_SESSION['filtro_actual'] ?? '');
         
         $this->gestor->eliminar($id);
         
-        // Redirigir manteniendo la página
-        header('Location: index.php?action=index&pagina=' . $paginaActual);
+        // Redirigir manteniendo página y filtro
+        $url = 'index.php?action=index&pagina=' . $paginaActual;
+        if ($filtroActual && $filtroActual !== 'todos') {
+            $url .= '&filtro=' . $filtroActual;
+        }
+        header('Location: ' . $url);
         exit();
     }
 }

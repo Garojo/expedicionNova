@@ -167,7 +167,7 @@ function obtenerDescripcionEstabilidad($estabilidad) {
             border-bottom: none;
         }
         tr:nth-child(even) { 
-            background-color: #f8f9fa; 
+            background-color: #f9f9f9; 
         }
         tr:hover { 
             background-color: #e3f2fd !important; 
@@ -270,7 +270,7 @@ function obtenerDescripcionEstabilidad($estabilidad) {
             vertical-align: middle;
         }
         
-        /* ACCIONES */
+        /* ACCIONES - SOLO AÑADIR BOTÓN REACCIONAR */
         .acciones {
             display: flex;
             gap: 8px;
@@ -284,6 +284,8 @@ function obtenerDescripcionEstabilidad($estabilidad) {
             display: inline-flex;
             align-items: center;
             gap: 5px;
+            border: none;
+            cursor: pointer;
         }
         .btn-editar {
             background: #4CAF50;
@@ -302,6 +304,16 @@ function obtenerDescripcionEstabilidad($estabilidad) {
             background: #d32f2f;
             transform: translateY(-2px);
             box-shadow: 0 3px 6px rgba(244, 67, 54, 0.3);
+        }
+        /* NUEVO: Botón Reaccionar */
+        .btn-reaccionar {
+            background: #9c27b0;
+            color: white;
+        }
+        .btn-reaccionar:hover {
+            background: #7b1fa2;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(156, 39, 176, 0.3);
         }
         
         /* PAGINADOR */
@@ -375,6 +387,35 @@ function obtenerDescripcionEstabilidad($estabilidad) {
             border-left: 5px solid;
         }
         
+        /* FILTRO */
+        .filtro-container {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .filtro-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        /* CONTADORES */
+        .contadores {
+            display: flex;
+            gap: 15px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        .contador {
+            padding: 5px 10px;
+            background: white;
+            border-radius: 15px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+        
         /* RESPONSIVE */
         @media (max-width: 768px) {
             .container { padding: 15px; }
@@ -386,6 +427,7 @@ function obtenerDescripcionEstabilidad($estabilidad) {
             .barra-estabilidad { flex-direction: column; align-items: flex-start; }
             .barra-container { width: 100%; }
             .leyenda { flex-direction: column; }
+            .contadores { flex-direction: column; }
         }
     </style>
 </head>
@@ -407,7 +449,50 @@ function obtenerDescripcionEstabilidad($estabilidad) {
             </div>
         </div>
         
-        <!-- Leyenda de colores CORREGIDA -->
+        <!-- FILTRO -->
+        <div class="filtro-container">
+            <form method="GET" action="index.php" class="filtro-form">
+                <input type="hidden" name="action" value="index">
+                
+                <label><strong>🔍 Filtrar:</strong></label>
+                
+                <select name="filtro" style="padding: 8px 15px; border-radius: 5px; border: 1px solid #ddd;" onchange="this.form.submit()">
+                    <option value="todos" <?= (!isset($_GET['filtro']) || $_GET['filtro'] === 'todos') ? 'selected' : '' ?>>
+                        👁️ Todos
+                    </option>
+                    <option value="FormaDeVida" <?= (isset($_GET['filtro']) && $_GET['filtro'] === 'FormaDeVida') ? 'selected' : '' ?>>
+                        👽 Formas de Vida
+                    </option>
+                    <option value="Minerales" <?= (isset($_GET['filtro']) && $_GET['filtro'] === 'Minerales') ? 'selected' : '' ?>>
+                        💎 Minerales
+                    </option>
+                    <option value="Climatologia" <?= (isset($_GET['filtro']) && $_GET['filtro'] === 'Climatologia') ? 'selected' : '' ?>>
+                        🌪️ Climatologías
+                    </option>
+                </select>
+                
+                <?php if (isset($_GET['pagina'])): ?>
+                    <input type="hidden" name="pagina" value="<?= $_GET['pagina'] ?>">
+                <?php endif; ?>
+                
+                <?php if (isset($_GET['filtro']) && $_GET['filtro'] !== 'todos'): ?>
+                    <a href="index.php?action=index<?= isset($_GET['pagina']) ? '&pagina=' . $_GET['pagina'] : '' ?>" 
+                       style="padding: 8px 15px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px;">
+                        🗑️ Limpiar
+                    </a>
+                <?php endif; ?>
+            </form>
+            
+            <!-- CONTADORES -->
+            <div class="contadores">
+                <div class="contador">👁️ <strong>Todos:</strong> <?= $contadores['total'] ?? 0 ?></div>
+                <div class="contador">👽 <strong>Vida:</strong> <?= $contadores['FormaDeVida'] ?? 0 ?></div>
+                <div class="contador">💎 <strong>Minerales:</strong> <?= $contadores['Minerales'] ?? 0 ?></div>
+                <div class="contador">🌪️ <strong>Clima:</strong> <?= $contadores['Climatologia'] ?? 0 ?></div>
+            </div>
+        </div>
+        
+        <!-- Leyenda de colores -->
         <div class="leyenda">
             <div class="leyenda-item">
                 <div class="leyenda-color" style="background: #d4edda; border-left-color: #28a745;"></div>
@@ -427,8 +512,6 @@ function obtenerDescripcionEstabilidad($estabilidad) {
             <div class="vacio">
                 <h3>🌌 El universo está vacío... por ahora</h3>
                 <p style="font-size: 16px; margin-bottom: 25px;">No se han registrado entidades estelares en esta expedición.</p>
-                <a href="index.php?action=crear" class="btn-nuevo" style="font-size: 18px;">
-                    🚀 Iniciar primera exploración
                 </a>
             </div>
         <?php else: ?>
@@ -492,18 +575,25 @@ function obtenerDescripcionEstabilidad($estabilidad) {
                                 <?= $infoEstabilidad['desc'] ?>
                             </div>
                         </td>
-<td class="acciones">
-    <a href="index.php?action=editar&id=<?= $entidad->getId() ?>&pagina=<?= $pagina ?>" 
-       class="btn-accion btn-editar" title="Editar entidad">
-        ✏️ Editar
-    </a>
-    <a href="index.php?action=eliminar&id=<?= $entidad->getId() ?>&pagina=<?= $pagina ?>" 
-       class="btn-accion btn-eliminar" 
-       onclick="return confirm('¿Expulsar \'<?= addslashes($entidad->getNombre()) ?>\' al espacio exterior?')"
-       title="Eliminar entidad">
-        🗑️ Eliminar
-    </a>
-</td>
+                        <td class="acciones">
+                            <a href="index.php?action=editar&id=<?= $entidad->getId() ?>&pagina=<?= $pagina ?><?= isset($_GET['filtro']) ? '&filtro=' . $_GET['filtro'] : '' ?>" 
+                               class="btn-accion btn-editar" title="Editar entidad">
+                                ✏️ Editar
+                            </a>
+                            <a href="index.php?action=eliminar&id=<?= $entidad->getId() ?>&pagina=<?= $pagina ?><?= isset($_GET['filtro']) ? '&filtro=' . $_GET['filtro'] : '' ?>" 
+                               class="btn-accion btn-eliminar" 
+                               onclick="return confirm('¿Expulsar \'<?= addslashes($entidad->getNombre()) ?>\' al espacio exterior?')"
+                               title="Eliminar entidad">
+                                🗑️ Eliminar
+                            </a>
+                            <!-- NUEVO: BOTÓN REACCIONAR -->
+                            <button type="button" 
+                                    class="btn-accion btn-reaccionar" 
+                                    onclick="alert('<?= addslashes($entidad->reaccionar()) ?>')"
+                                    title="Ver reacción de la entidad">
+                                🔊 Reaccionar
+                            </button>
+                        </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -511,29 +601,35 @@ function obtenerDescripcionEstabilidad($estabilidad) {
             
             <!-- Paginación -->
             <?php if ($paginas > 1): ?>
- <div class="paginador">
-    <?php if ($pagina > 1): ?>
-        <a href="index.php?action=index&pagina=<?= $pagina-1 ?>">« Anterior</a>
-    <?php endif; ?>
-    
-    <?php for ($i = 1; $i <= $paginas; $i++): ?>
-        <?php if ($i == $pagina): ?>
-            <span class="actual"><?= $i ?></span>
-        <?php else: ?>
-            <a href="index.php?action=index&pagina=<?= $i ?>"><?= $i ?></a>
-        <?php endif; ?>
-    <?php endfor; ?>
-    
-    <?php if ($pagina < $paginas): ?>
-        <a href="index.php?action=index&pagina=<?= $pagina+1 ?>">Siguiente »</a>
-    <?php endif; ?>
-</div>
+            <div class="paginador">
+                <?php if ($pagina > 1): ?>
+                    <a href="index.php?action=index&pagina=<?= $pagina-1 ?><?= isset($_GET['filtro']) ? '&filtro=' . $_GET['filtro'] : '' ?>">
+                        « Anterior
+                    </a>
+                <?php endif; ?>
+                
+                <?php for ($i = 1; $i <= $paginas; $i++): ?>
+                    <?php if ($i == $pagina): ?>
+                        <span class="actual"><?= $i ?></span>
+                    <?php else: ?>
+                        <a href="index.php?action=index&pagina=<?= $i ?><?= isset($_GET['filtro']) ? '&filtro=' . $_GET['filtro'] : '' ?>">
+                            <?= $i ?>
+                        </a>
+                    <?php endif; ?>
+                <?php endfor; ?>
+                
+                <?php if ($pagina < $paginas): ?>
+                    <a href="index.php?action=index&pagina=<?= $pagina+1 ?><?= isset($_GET['filtro']) ? '&filtro=' . $_GET['filtro'] : '' ?>">
+                        Siguiente »
+                    </a>
+                <?php endif; ?>
+            </div>
             <?php endif; ?>
         <?php endif; ?>
         
         <!-- Info del sistema -->
         <div style="margin-top: 40px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 14px; text-align: center; border-top: 3px solid #00bcd4;">
-            <strong>🌐 Sistema de Gestión Galáctica</strong> |
+            <strong>🌐 Sistema de Gestión Galáctica </strong> | 
             <a href="debug.php" style="color: #1a237e; text-decoration: none;">🔧 Modo debug</a>
         </div>
     </div>

@@ -277,7 +277,16 @@ window.onload = function() {
                 <button type="submit" id="btnGuardar">
                     <?= isset($entidad) ? '💾 Guardar Cambios' : '🚀 Crear Entidad' ?>
                 </button>
-                <a href="index.php?action=index" class="btn-cancelar">❌ Cancelar</a>
+<?php
+
+$pagina_actual = $_GET['pagina'] ?? 
+                 ($_POST['pagina_actual'] ?? 
+                 ($_SESSION['pagina_edicion'] ?? 
+                 ($_SESSION['ultima_pagina'] ?? 1)));
+?>
+
+<a href="index.php?action=index&pagina=<?= $pagina_actual ?>" 
+   class="btn-cancelar">❌ Cancelar</a>
             </div>
         </form>
     </div>
